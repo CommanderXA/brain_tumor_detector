@@ -16,7 +16,7 @@ from dataset import MRIDataset
 from train import train
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
+@hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
 
     # setup
@@ -32,7 +32,7 @@ def main(cfg: DictConfig):
             Config.cfg.files.root_dir,
             Config.cfg.files.train + Config.cfg.files.file_ext
         ),
-        root_dir=Config.cfg.files.root_dir,
+        root_dir=Config.cfg.files.data_dir,
         transform=transforms.Compose([
             transforms.ToTensor(), 
             transforms.Resize((256, 256))
@@ -43,7 +43,7 @@ def main(cfg: DictConfig):
             Config.cfg.files.root_dir,
             Config.cfg.files.val + Config.cfg.files.file_ext
         ),
-        root_dir=Config.cfg.files.root_dir,
+        root_dir=Config.cfg.files.data_dir,
         transform=transforms.Compose([
             transforms.ToTensor(), 
             transforms.Resize((256, 256))
@@ -54,7 +54,7 @@ def main(cfg: DictConfig):
             Config.cfg.files.root_dir,
             Config.cfg.files.test + Config.cfg.files.file_ext
         ),
-        root_dir=Config.cfg.files.root_dir,
+        root_dir=Config.cfg.files.data_dir,
         transform=transforms.Compose([transforms.ToTensor()])
     )
 
@@ -76,11 +76,11 @@ def main(cfg: DictConfig):
         )
 
         # model save
-        if not os.path.isdir("./models/"):
-            os.mkdir("./models/")
+        if not os.path.isdir("../models/"):
+            os.mkdir("../models/")
 
         torch.save(
-            model, f"./models/model_{datetime.now().strftime('%Y-%m-%d_%H:%M')}.pt"
+            model, f"../models/model_{datetime.now().strftime('%Y-%m-%d_%H:%M')}.pt"
         )
     
     # for i, data in enumerate(train_dataloader):

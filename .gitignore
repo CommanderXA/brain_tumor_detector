@@ -1,0 +1,7 @@
+# Python
+__pycache__
+
+# Project
+/models
+/outputs
+/data/data

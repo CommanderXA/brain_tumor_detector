@@ -1,0 +1,14 @@
+hyperparams:
+  lr: 1e-6
+  epochs: 10
+
+core:
+  device: "cuda"
+  train: false
+
+files:
+  root_dir: "data/data/"
+  train: "train"
+  val: "val"
+  test: "test"
+  file_ext: ".csv"

@@ -1,7 +1,8 @@
 import os
-import hydra
-
+import logging
 from datetime import datetime
+
+import hydra
 from omegaconf import DictConfig
 
 import torch
@@ -20,13 +21,17 @@ from train import train
 def main(cfg: DictConfig):
 
     # setup
+    log = logging.getLogger(__name__)
     Config.set_device()
     Config.set_cfg(cfg)
+    Config.set_log(log)
+    Config.log.info(f"Performing setup")
     model = Model().to(Config.device)
     criterion = BCELoss()
     optimizer = SGD(model.parameters(), lr=Config.cfg.hyperparams.lr)
 
     # datasets
+    Config.log.info(f"Loading Dataset")
     train_dataset = MRIDataset(
         annotation_file=os.path.join(
             Config.cfg.files.root_dir,
@@ -66,6 +71,7 @@ def main(cfg: DictConfig):
 
     # training
     if Config.cfg.core.train == True:
+        Config.log.info(f"Starting training")
         train(
             Config.cfg.hyperparams.epochs,
             model,
@@ -74,6 +80,8 @@ def main(cfg: DictConfig):
             criterion,
             optimizer
         )
+
+        Config.log.info(f"Training finished")
 
         # model save
         if not os.path.isdir("../models/"):

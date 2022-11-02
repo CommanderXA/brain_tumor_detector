@@ -1,3 +1,7 @@
+defaults:
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+
 hyperparams:
   lr: 1e-6
   epochs: 10

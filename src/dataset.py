@@ -1,7 +1,11 @@
 import os
+
 import pandas as pd
 from PIL import Image
+import torch
 from torch.utils.data import Dataset
+
+from utils import label_to_num
 
 
 class MRIDataset(Dataset):
@@ -25,7 +29,7 @@ class MRIDataset(Dataset):
     def __getitem__(self, index: int) -> any:
         data_path = os.path.join(self.root_dir, self.labels.iloc[index, 1])
         image = Image.open(data_path)
-        label = self.labels.iloc[index, 2]
+        label = torch.Tensor(label_to_num(self.labels.iloc[index, 2]))
         if self.transform:
             image = self.transform(image)
         return image, label

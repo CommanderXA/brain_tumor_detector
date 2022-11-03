@@ -6,7 +6,6 @@ from tqdm import tqdm
 
 from config import Config
 from model import Model
-from utils import label_to_num, prediction_to_class
 
 
 def train(
@@ -18,30 +17,35 @@ def train(
     optimizer: optim.Adam
 ):
     for epoch in range(epochs):
+        epoch_loss = 0
         correct = 0
+        total = 0
+
         model.train()
         with tqdm(dataloader) as epoch_data:
             for sample, target in epoch_data:
                 epoch_data.set_description(f"Epoch: {epoch}/{epochs}")
 
                 sample = sample.to(Config.device)
-                target = label_to_num(target).to(Config.device)
+                target = target.to(Config.device)
 
                 out = model(sample)
-                if (prediction_to_class(out) == target).item():
-                    correct += 1
+                total += target.size(0)
+                correct += (torch.round(out) == target).sum().item()
 
                 # compute loss
                 loss = criterion(out, target)
                 loss.backward()
+                epoch_loss += loss.item()/len(dataloader)
 
                 # optimize
-                optimizer.zero_grad()
                 optimizer.step()
+                optimizer.zero_grad()
 
                 epoch_data.set_postfix(
-                    loss=loss.item(), accuracy=correct/len(dataloader)*100.)
+                    loss=loss.item(), accuracy=f"{(correct/total*100.):.2f}%")
 
+        total = 0
         with torch.no_grad():
             val_correct = 0
             model.eval()
@@ -50,14 +54,15 @@ def train(
                     epoch_val_data.set_description(f"Validation: ")
 
                     sample = sample.to(Config.device)
-                    target = label_to_num(target).to(Config.device)
+                    target = target.to(Config.device)
 
                     out = model(sample)
-                    if prediction_to_class(out) == target:
-                        val_correct += 1
+
+                    total += target.size(0)
+                    val_correct += (torch.round(out) == target).sum().item()
 
                     # compute loss
                     loss = criterion(out, target)
 
-                    epoch_val_data.set_postfix(
-                        loss=loss.item(), accuracy=val_correct/len(val_dataloader)*100.)
+                    epoch_data.set_postfix(
+                        loss=loss.item(), accuracy=f"{(val_correct/total*100.):.2f}%")

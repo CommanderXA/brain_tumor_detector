@@ -8,6 +8,12 @@ class Config:
     log = None
 
     @classmethod
+    def setup(cls, cfg: DictConfig, log) -> None:
+        cls.set_cfg(cfg)
+        cls.set_device()
+        cls.set_log(log)
+
+    @classmethod
     def set_cfg(cls, cfg: DictConfig) -> None:
         cls.cfg = cfg
 

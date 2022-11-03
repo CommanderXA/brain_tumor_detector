@@ -2,16 +2,20 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+from config import Config
+
 
 class Model(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.conv2d = Conv2dBlock(1, 64)
-        self.conv2d_1 = Conv2dBlock(64, 128)
-        self.conv2d_2 = Conv2dBlock(128, 128)
+        self.conv2d = Conv2dBlock(1, 32)
+        self.conv2d_1 = Conv2dBlock(32, 64)
+        self.conv2d_2 = Conv2dBlock(64, 128)
         self.conv2d_3 = Conv2dBlock(128, 128)
-        self.conv2d_4 = Conv2dBlock(128, 256)
-        self.lin = nn.Linear(16384, 256)
+        self.conv2d_4 = Conv2dBlock(64, 128)
+        self.batch_norm = nn.BatchNorm2d(64)
+        self.batch_norm_2 = nn.BatchNorm2d(128)
+        self.lin = nn.Linear(131072, 256)
         self.lin_1 = nn.Linear(256, 128)
         self.lin_2 = nn.Linear(128, 64)
         self.lin_3 = nn.Linear(64, 1)
@@ -19,10 +23,12 @@ class Model(nn.Module):
     def forward(self, x) -> torch.Tensor:
         x = self.conv2d(x)
         x = self.conv2d_1(x)
-        x = self.conv2d_2(x)
-        x = self.conv2d_3(x)
+        x = self.batch_norm(x)
+        # x = self.conv2d_2(x)
+        # x = self.conv2d_3(x)
         x = self.conv2d_4(x)
-        x = x.reshape(1, -1)
+        x = self.batch_norm_2(x)
+        x = x.reshape(-1, 131072)
         x = F.relu(self.lin(x))
         x = F.relu(self.lin_1(x))
         x = F.relu(self.lin_2(x))

@@ -15,6 +15,7 @@ from config import Config
 from model import Model
 from dataset import MRIDataset
 from train import train
+from inference import forward
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
@@ -30,47 +31,53 @@ def main(cfg: DictConfig):
     criterion = BCELoss()
     optimizer = SGD(model.parameters(), lr=Config.cfg.hyperparams.lr)
 
-    # datasets
-    Config.log.info(f"Loading Dataset")
-    train_dataset = MRIDataset(
-        annotation_file=os.path.join(
-            Config.cfg.files.root_dir,
-            Config.cfg.files.train + Config.cfg.files.file_ext
-        ),
-        root_dir=Config.cfg.files.data_dir,
-        transform=transforms.Compose([
-            transforms.ToTensor(), 
-            transforms.Resize((256, 256))
-        ])
-    )
-    val_dataset = MRIDataset(
-        annotation_file=os.path.join(
-            Config.cfg.files.root_dir,
-            Config.cfg.files.val + Config.cfg.files.file_ext
-        ),
-        root_dir=Config.cfg.files.data_dir,
-        transform=transforms.Compose([
-            transforms.ToTensor(), 
-            transforms.Resize((256, 256))
-        ])
-    )
-    test_dataset = MRIDataset(
-        annotation_file=os.path.join(
-            Config.cfg.files.root_dir,
-            Config.cfg.files.test + Config.cfg.files.file_ext
-        ),
-        root_dir=Config.cfg.files.data_dir,
-        transform=transforms.Compose([transforms.ToTensor()])
-    )
-
-    # dataloaders
-    train_dataloader = DataLoader(
-        train_dataset, batch_size=1, shuffle=True, num_workers=3)
-    val_dataloader = DataLoader(
-        val_dataset, batch_size=1, shuffle=True, num_workers=3)
-
-    # training
     if Config.cfg.core.train == True:
+        # datasets
+        Config.log.info(f"Loading Dataset")
+        train_dataset = MRIDataset(
+            annotation_file=os.path.join(
+                Config.cfg.files.root_dir,
+                Config.cfg.files.train + Config.cfg.files.file_ext
+            ),
+            root_dir=Config.cfg.files.data_dir,
+            transform=transforms.Compose([
+                transforms.Grayscale(),
+                transforms.ToTensor(),
+                transforms.Resize((256, 256))
+            ])
+        )
+        val_dataset = MRIDataset(
+            annotation_file=os.path.join(
+                Config.cfg.files.root_dir,
+                Config.cfg.files.val + Config.cfg.files.file_ext
+            ),
+            root_dir=Config.cfg.files.data_dir,
+            transform=transforms.Compose([
+                transforms.Grayscale(),
+                transforms.ToTensor(),
+                transforms.Resize((256, 256))
+            ])
+        )
+        test_dataset = MRIDataset(
+            annotation_file=os.path.join(
+                Config.cfg.files.root_dir,
+                Config.cfg.files.test + Config.cfg.files.file_ext
+            ),
+            root_dir=Config.cfg.files.data_dir,
+            transform=transforms.Compose([
+                transforms.Grayscale(),
+                transforms.ToTensor(),
+                transforms.Resize((256, 256))
+            ])
+        )
+
+        # dataloaders
+        train_dataloader = DataLoader(
+            train_dataset, batch_size=1, shuffle=True, num_workers=3)
+        val_dataloader = DataLoader(
+            val_dataset, batch_size=1, shuffle=True, num_workers=3)
+
+        # training
         Config.log.info(f"Starting training")
         train(
             Config.cfg.hyperparams.epochs,
@@ -80,7 +87,6 @@ def main(cfg: DictConfig):
             criterion,
             optimizer
         )
-
         Config.log.info(f"Training finished")
 
         # model save
@@ -90,12 +96,11 @@ def main(cfg: DictConfig):
         torch.save(
             model, f"../models/model_{datetime.now().strftime('%Y-%m-%d_%H:%M')}.pt"
         )
-    
-    # for i, data in enumerate(train_dataloader):
-    #     sample, target = data
-    #     sample = sample.to(Config.device)
-    #     print(sample.shape)
-    #     model(sample)
+
+    if Config.cfg.core.inference is not False:
+        prediction = forward(model)
+        Config.log.critical(
+            f"Image {Config.cfg.core.inference} is classified as: {prediction}")
 
 
 if __name__ == "__main__":

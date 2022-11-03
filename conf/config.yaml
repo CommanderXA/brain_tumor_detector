@@ -9,6 +9,7 @@ hyperparams:
 core:
   device: "cuda"
   train: false
+  inference: false
 
 files:
   root_dir: "data/"

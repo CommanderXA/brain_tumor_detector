@@ -6,7 +6,7 @@ import torch.nn.functional as F
 class Model(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.conv2d = Conv2dBlock(3, 64)
+        self.conv2d = Conv2dBlock(1, 64)
         self.conv2d_1 = Conv2dBlock(64, 128)
         self.conv2d_2 = Conv2dBlock(128, 128)
         self.conv2d_3 = Conv2dBlock(128, 128)

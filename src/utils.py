@@ -1,10 +1,16 @@
+from enum import Enum
+
 import torch
 
-def label_from_num(x: float) -> str:
+class MRIClasses(Enum):
+    Normal = 0
+    Tumor = 1
+
+def label_from_num(x: float) -> MRIClasses:
     if x >= 0.5:
-        return "tumor"
+        return MRIClasses.Tumor
     else:
-        return "normal"
+        return MRIClasses.Normal
 
 
 def label_to_num(x: str) -> float:

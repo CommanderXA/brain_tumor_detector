@@ -2,8 +2,6 @@ from enum import Enum
 
 import torch
 
-from config import Config
-
 
 class MRIClasses(Enum):
     Normal = 0
@@ -22,7 +20,7 @@ def label_to_num(x: str) -> torch.Tensor:
         x = 1.
     else:
         x = 0.
-    
+
     y = torch.Tensor([x])
     return y
 

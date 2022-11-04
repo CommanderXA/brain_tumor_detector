@@ -14,6 +14,8 @@ Create `data` directory inside the `data` directory and place 2 class directorie
 
 To train the model run: `python3 main.py core.train=true`
 
+> *** TensorBoard *** is in this project. To use it run: `tensorboard --logdir=runs` (in the root directory of the project)
+
 To pass one image for classification run: `python3 main.py core.pretrained=<path_to_model> core.inference=<path_to_image>`
 
 > *Pretrained models are available in the releases of this repo.*

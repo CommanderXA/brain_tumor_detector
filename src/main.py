@@ -1,6 +1,5 @@
 import os
 import logging
-from datetime import datetime
 
 import hydra
 from omegaconf import DictConfig
@@ -29,6 +28,7 @@ def main(cfg: DictConfig):
     if Config.cfg.core.pretrained:
         model = torch.load(os.path.join(
             Config.cfg.files.models_dir, Config.cfg.core.pretrained))
+        Config.set_current_model_name(Config.cfg.core.pretrained.split("/")[-1])
     else:
         model = Model().to(Config.device)
     Config.log.info(
@@ -101,10 +101,6 @@ def main(cfg: DictConfig):
         # model save
         if not os.path.isdir("./models/"):
             os.mkdir("./models/")
-
-        Config.log.info(f"Saving model")
-        torch.save(
-            model, f"./models/model_{datetime.now().strftime('%Y-%m-%d_%H:%M')}.pt")
 
     if Config.cfg.core.inference is not False:
         prediction = forward(model)

@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.optim as optim
 from torch.nn import BCELoss
@@ -19,6 +21,8 @@ def train(
     optimizer: optim.Adam
 ):
     writer = SummaryWriter()
+
+    min_val_loss = 1000
     for epoch in range(epochs):
         epoch_loss = 0
         correct = 0
@@ -80,6 +84,12 @@ def train(
         # writing Accuracy and Loss of validation to the TensorBoard
         writer.add_scalar("Loss/val", epoch_loss, epoch)
         writer.add_scalar("Accuracy/val", correct/total, epoch)
+
+        # save the best model with accordance to the validation loss
+        if min_val_loss > epoch_loss:
+            min_val_loss = epoch_loss
+            torch.save(model, os.path.join(
+                Config.cfg.files.models_dir, Config.training_model_name))
 
     # testing
     correct = 0

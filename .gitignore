@@ -3,7 +3,12 @@ __pycache__
 
 # Project
 /models
-/outputs
 /data/data
 /env
+
+# TensorBoard
+/runs
+
+# Hydra
+/outputs
 main.log

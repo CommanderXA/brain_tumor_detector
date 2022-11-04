@@ -25,3 +25,5 @@ To pass one image for classification run: `python3 main.py core.pretrained=<path
 - `pip install pandas`
 - `pip install torch torchvision torchaudio`
 - `pip install tqdm`
+- `pip install tensorboard`
+- `pip install torch_tb_profiler`

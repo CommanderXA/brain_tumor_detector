@@ -22,10 +22,14 @@ To pass one image for classification run: `python3 main.py core.pretrained=<path
 
 ## Requierements
 
-- `pip install hydra-core --upgrade`
-- `pip install hydra_colorlog --upgrade`
-- `pip install pandas`
-- `pip install torch torchvision torchaudio`
-- `pip install tqdm`
-- `pip install tensorboard`
-- `pip install torch_tb_profiler`
+To install requirements first create an environment:
+
+`python -m venv .env` *.env is the name of the directory where the environment of the project will be located*
+
+Activate the environment
+
+`source ./env/bin/activate`
+
+Install requirements
+
+`pip install -r requirements.txt`

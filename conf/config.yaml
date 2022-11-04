@@ -4,17 +4,19 @@ defaults:
 
 hyperparams:
   lr: 3e-4
-  epochs: 10
+  epochs: 1
   batch_size: 32
 
 core:
   device: "cuda"
   train: false
   inference: false
+  pretrained: false
 
 files:
   root_dir: "data/"
   data_dir: "data/data"
+  models_dir: "models/"
   train: "train"
   val: "val"
   test: "test"

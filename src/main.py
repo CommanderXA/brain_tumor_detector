@@ -6,7 +6,7 @@ import hydra
 from omegaconf import DictConfig
 
 import torch
-from torch.nn import MSELoss
+from torch.nn import BCELoss
 from torch.optim import Adam
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -25,10 +25,15 @@ def main(cfg: DictConfig):
     log = logging.getLogger(__name__)
     Config.setup(cfg, log)
     Config.log.info(f"Performing setup")
-    model = Model().to(Config.device)
+
+    if Config.cfg.core.pretrained:
+        model = torch.load(os.path.join(
+            Config.cfg.files.models_dir, Config.cfg.core.pretrained))
+    else:
+        model = Model().to(Config.device)
     Config.log.info(
         "Model has: " + str(model.parameters_count()) + " parameters")
-    criterion = MSELoss()
+    criterion = BCELoss()
     optimizer = Adam(model.parameters(), lr=Config.cfg.hyperparams.lr)
 
     if Config.cfg.core.train == True:
@@ -77,6 +82,8 @@ def main(cfg: DictConfig):
             train_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
         val_dataloader = DataLoader(
             val_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
+        test_dataloader = DataLoader(
+            test_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
 
         # training
         Config.log.info(f"Starting training")
@@ -85,18 +92,19 @@ def main(cfg: DictConfig):
             model,
             train_dataloader,
             val_dataloader,
+            test_dataloader,
             criterion,
             optimizer
         )
         Config.log.info(f"Training finished")
 
         # model save
-        if not os.path.isdir("../models/"):
-            os.mkdir("../models/")
+        if not os.path.isdir("./models/"):
+            os.mkdir("./models/")
 
+        Config.log.info(f"Saving model")
         torch.save(
-            model, f"../models/model_{datetime.now().strftime('%Y-%m-%d_%H:%M')}.pt"
-        )
+            model, f"./models/model_{datetime.now().strftime('%Y-%m-%d_%H:%M')}.pt")
 
     if Config.cfg.core.inference is not False:
         prediction = forward(model)

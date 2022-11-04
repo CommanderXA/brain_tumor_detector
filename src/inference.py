@@ -24,8 +24,6 @@ def forward(model: Model) -> str:
         transforms.Resize((256, 256))
     ])).to(Config.device)
 
-    print(torch.mean(image))
-
     out = model(image)
     prediction = label_from_num(out[0])
     return prediction.name

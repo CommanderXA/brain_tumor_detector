@@ -13,6 +13,7 @@ def train(
     model: Model,
     dataloader: DataLoader,
     val_dataloader: DataLoader,
+    test_dataloader: DataLoader,
     criterion: BCELoss,
     optimizer: optim.Adam
 ):
@@ -64,5 +65,28 @@ def train(
                     # compute loss
                     loss = criterion(out, target)
 
-                    epoch_data.set_postfix(
+                    epoch_val_data.set_postfix(
                         loss=loss.item(), accuracy=f"{(val_correct/total*100.):.2f}%")
+
+    total = 0
+    model.eval()
+    with torch.no_grad():
+        val_correct = 0
+        model.eval()
+        with tqdm(val_dataloader) as epoch_data:
+            for sample, target in epoch_data:
+                epoch_data.set_description(f"Testing: ")
+
+                sample = sample.to(Config.device)
+                target = target.to(Config.device)
+
+                out = model(sample)
+
+                total += target.size(0)
+                val_correct += (torch.round(out) == target).sum().item()
+
+                # compute loss
+                loss = criterion(out, target)
+
+                epoch_data.set_postfix(
+                    loss=loss.item(), accuracy=f"{(val_correct/total*100.):.2f}%")

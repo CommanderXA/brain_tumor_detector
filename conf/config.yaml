@@ -4,7 +4,7 @@ defaults:
 
 hyperparams:
   lr: 3e-4
-  epochs: 1
+  epochs: 10
   batch_size: 32
 
 core:

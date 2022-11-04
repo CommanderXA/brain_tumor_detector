@@ -12,8 +12,11 @@ Create `data` directory inside the `data` directory and place 2 class directorie
 
 ## Actions
 
-To pass one image for classification run `python3 main.py core.inference=`<_path_to_image_>
-To train the model run `python3 main.py core.train=true`
+To train the model run: `python3 main.py core.train=true`
+
+To pass one image for classification run: `python3 main.py core.pretrained=<path_to_model> core.inference=<path_to_image>`
+
+> *Pretrained models are available in the releases of this repo.*
 
 ## Requierements
 

@@ -1,13 +1,12 @@
 import os
 import logging
-from datetime import datetime
 
 import hydra
 from omegaconf import DictConfig
 
 import torch
 from torch.nn import BCELoss
-from torch.optim import SGD
+from torch.optim import Adam
 from torchvision import transforms
 from torch.utils.data import DataLoader
 
@@ -23,15 +22,22 @@ def main(cfg: DictConfig):
 
     # setup
     log = logging.getLogger(__name__)
-    Config.set_device()
-    Config.set_cfg(cfg)
-    Config.set_log(log)
+    Config.setup(cfg, log)
     Config.log.info(f"Performing setup")
-    model = Model().to(Config.device)
+
+    if Config.cfg.core.pretrained:
+        model = torch.load(os.path.join(
+            Config.cfg.files.models_dir, Config.cfg.core.pretrained))
+        Config.set_current_model_name(Config.cfg.core.pretrained.split("/")[-1])
+    else:
+        model = Model().to(Config.device)
+    Config.log.info(
+        "Model has: " + str(model.parameters_count()) + " parameters")
     criterion = BCELoss()
-    optimizer = SGD(model.parameters(), lr=Config.cfg.hyperparams.lr)
+    optimizer = Adam(model.parameters(), lr=Config.cfg.hyperparams.lr)
 
     if Config.cfg.core.train == True:
+
         # datasets
         Config.log.info(f"Loading Dataset")
         train_dataset = MRIDataset(
@@ -42,8 +48,8 @@ def main(cfg: DictConfig):
             root_dir=Config.cfg.files.data_dir,
             transform=transforms.Compose([
                 transforms.Grayscale(),
+                transforms.Resize((256, 256)),
                 transforms.ToTensor(),
-                transforms.Resize((256, 256))
             ])
         )
         val_dataset = MRIDataset(
@@ -54,8 +60,8 @@ def main(cfg: DictConfig):
             root_dir=Config.cfg.files.data_dir,
             transform=transforms.Compose([
                 transforms.Grayscale(),
+                transforms.Resize((256, 256)),
                 transforms.ToTensor(),
-                transforms.Resize((256, 256))
             ])
         )
         test_dataset = MRIDataset(
@@ -66,16 +72,18 @@ def main(cfg: DictConfig):
             root_dir=Config.cfg.files.data_dir,
             transform=transforms.Compose([
                 transforms.Grayscale(),
+                transforms.Resize((256, 256)),
                 transforms.ToTensor(),
-                transforms.Resize((256, 256))
             ])
         )
 
         # dataloaders
         train_dataloader = DataLoader(
-            train_dataset, batch_size=1, shuffle=True, num_workers=3)
+            train_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
         val_dataloader = DataLoader(
-            val_dataset, batch_size=1, shuffle=True, num_workers=3)
+            val_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
+        test_dataloader = DataLoader(
+            test_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
 
         # training
         Config.log.info(f"Starting training")
@@ -84,22 +92,19 @@ def main(cfg: DictConfig):
             model,
             train_dataloader,
             val_dataloader,
+            test_dataloader,
             criterion,
             optimizer
         )
         Config.log.info(f"Training finished")
 
         # model save
-        if not os.path.isdir("../models/"):
-            os.mkdir("../models/")
-
-        torch.save(
-            model, f"../models/model_{datetime.now().strftime('%Y-%m-%d_%H:%M')}.pt"
-        )
+        if not os.path.isdir("./models/"):
+            os.mkdir("./models/")
 
     if Config.cfg.core.inference is not False:
         prediction = forward(model)
-        Config.log.critical(
+        Config.log.info(
             f"Image {Config.cfg.core.inference} is classified as: {prediction}")
 
 

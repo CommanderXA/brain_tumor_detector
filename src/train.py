@@ -1,12 +1,15 @@
 import os
 
 import torch
-import torch.optim as optim
 from torch.nn import BCELoss
+from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from torchvision import transforms
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from dataset import MRIDataset
 from config import Config
 from model import Model
 
@@ -14,13 +17,57 @@ from model import Model
 def train(
     epochs: int,
     model: Model,
-    dataloader: DataLoader,
-    val_dataloader: DataLoader,
-    test_dataloader: DataLoader,
-    criterion: BCELoss,
-    optimizer: optim.Adam
 ):
     writer = SummaryWriter()
+    criterion = BCELoss()
+    optimizer = Adam(model.parameters(), lr=Config.cfg.hyperparams.lr)
+
+    # datasets
+    Config.log.info(f"Loading Dataset")
+    train_dataset = MRIDataset(
+        annotation_file=os.path.join(
+            Config.cfg.files.root_dir,
+            Config.cfg.files.train + Config.cfg.files.file_ext
+        ),
+        root_dir=Config.cfg.files.data_dir,
+        transform=transforms.Compose([
+            transforms.Grayscale(),
+            transforms.Resize((256, 256)),
+            transforms.ToTensor(),
+        ])
+    )
+    val_dataset = MRIDataset(
+        annotation_file=os.path.join(
+            Config.cfg.files.root_dir,
+            Config.cfg.files.val + Config.cfg.files.file_ext
+        ),
+        root_dir=Config.cfg.files.data_dir,
+        transform=transforms.Compose([
+            transforms.Grayscale(),
+            transforms.Resize((256, 256)),
+            transforms.ToTensor(),
+        ])
+    )
+    test_dataset = MRIDataset(
+        annotation_file=os.path.join(
+            Config.cfg.files.root_dir,
+            Config.cfg.files.test + Config.cfg.files.file_ext
+        ),
+        root_dir=Config.cfg.files.data_dir,
+        transform=transforms.Compose([
+            transforms.Grayscale(),
+            transforms.Resize((256, 256)),
+            transforms.ToTensor(),
+        ])
+    )
+
+    # dataloaders
+    train_dataloader = DataLoader(
+        train_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
+    val_dataloader = DataLoader(
+        val_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
+    test_dataloader = DataLoader(
+        test_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
 
     min_val_loss = 1000
     for epoch in range(epochs):
@@ -30,7 +77,7 @@ def train(
 
         # training
         model.train()
-        with tqdm(dataloader) as epoch_data:
+        with tqdm(train_dataloader) as epoch_data:
             for sample, target in epoch_data:
                 epoch_data.set_description(f"Epoch: {epoch}/{epochs}")
 
@@ -44,7 +91,7 @@ def train(
                 # compute loss
                 loss = criterion(out, target)
                 loss.backward()
-                epoch_loss += loss.item()/len(dataloader)
+                epoch_loss += loss.item()/len(train_dataloader)
 
                 # optimize
                 optimizer.step()

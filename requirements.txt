@@ -8,3 +8,5 @@ torch-tb-profiler==0.4.0
 torchaudio==0.13.0
 torchvision==0.14.0
 tqdm==4.64.1
+Flask==2.2.2
+Flask-Cors==3.0.10

@@ -1,20 +1,18 @@
 import os
 import logging
 
+import torch
+
 import hydra
 from omegaconf import DictConfig
 
-import torch
-from torch.nn import BCELoss
-from torch.optim import Adam
-from torchvision import transforms
-from torch.utils.data import DataLoader
+from flask_cors import CORS
 
 from config import Config
 from model import Model
-from dataset import MRIDataset
 from train import train
 from inference import forward
+from flaskr import create_app
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
@@ -28,81 +26,30 @@ def main(cfg: DictConfig):
     if Config.cfg.core.pretrained:
         model = torch.load(os.path.join(
             Config.cfg.files.models_dir, Config.cfg.core.pretrained))
-        Config.set_current_model_name(Config.cfg.core.pretrained.split("/")[-1])
+        Config.set_current_model_name(
+            Config.cfg.core.pretrained.split("/")[-1])
     else:
         model = Model().to(Config.device)
     Config.log.info(
         "Model has: " + str(model.parameters_count()) + " parameters")
-    criterion = BCELoss()
-    optimizer = Adam(model.parameters(), lr=Config.cfg.hyperparams.lr)
 
-    if Config.cfg.core.train == True:
+    if Config.cfg.core.deploy:
+        app = create_app(model)
+        CORS(app)
+        app.run(host=Config.cfg.server.host, port=Config.cfg.server.port, debug=True)
 
-        # datasets
-        Config.log.info(f"Loading Dataset")
-        train_dataset = MRIDataset(
-            annotation_file=os.path.join(
-                Config.cfg.files.root_dir,
-                Config.cfg.files.train + Config.cfg.files.file_ext
-            ),
-            root_dir=Config.cfg.files.data_dir,
-            transform=transforms.Compose([
-                transforms.Grayscale(),
-                transforms.Resize((256, 256)),
-                transforms.ToTensor(),
-            ])
-        )
-        val_dataset = MRIDataset(
-            annotation_file=os.path.join(
-                Config.cfg.files.root_dir,
-                Config.cfg.files.val + Config.cfg.files.file_ext
-            ),
-            root_dir=Config.cfg.files.data_dir,
-            transform=transforms.Compose([
-                transforms.Grayscale(),
-                transforms.Resize((256, 256)),
-                transforms.ToTensor(),
-            ])
-        )
-        test_dataset = MRIDataset(
-            annotation_file=os.path.join(
-                Config.cfg.files.root_dir,
-                Config.cfg.files.test + Config.cfg.files.file_ext
-            ),
-            root_dir=Config.cfg.files.data_dir,
-            transform=transforms.Compose([
-                transforms.Grayscale(),
-                transforms.Resize((256, 256)),
-                transforms.ToTensor(),
-            ])
-        )
-
-        # dataloaders
-        train_dataloader = DataLoader(
-            train_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
-        val_dataloader = DataLoader(
-            val_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
-        test_dataloader = DataLoader(
-            test_dataset, batch_size=Config.cfg.hyperparams.batch_size, shuffle=True, num_workers=3)
+    if Config.cfg.core.train:
 
         # training
         Config.log.info(f"Starting training")
-        train(
-            Config.cfg.hyperparams.epochs,
-            model,
-            train_dataloader,
-            val_dataloader,
-            test_dataloader,
-            criterion,
-            optimizer
-        )
+        train(Config.cfg.hyperparams.epochs, model)
         Config.log.info(f"Training finished")
 
         # model save
         if not os.path.isdir("./models/"):
             os.mkdir("./models/")
 
-    if Config.cfg.core.inference is not False:
+    if Config.cfg.core.inference:
         prediction = forward(model)
         Config.log.info(
             f"Image {Config.cfg.core.inference} is classified as: {prediction}")

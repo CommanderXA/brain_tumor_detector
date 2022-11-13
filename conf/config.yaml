@@ -12,6 +12,12 @@ core:
   train: false
   inference: false
   pretrained: false
+  model: "model.pt"
+  deploy: True
+
+server:
+  host: 127.0.0.1
+  port: 8081
 
 files:
   root_dir: "data/"

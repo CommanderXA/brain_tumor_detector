@@ -7,21 +7,24 @@ from model import Model
 from utils import label_from_num
 
 
-def get_image(transform=None) -> torch.Tensor:
-    data_path = Config.cfg.core.inference
-    image = Image.open(data_path)
+def get_image(image, transform=None) -> torch.Tensor:
+    # data_path = Config.cfg.core.inference
+    image = Image.open(image)
     if transform:
         image = transform(image)
     return image.unsqueeze(0)
 
 
-def forward(model: Model) -> str:
-    image = get_image(transform=transforms.Compose([
-        transforms.Grayscale(),
-        transforms.ToTensor(),
-        transforms.Resize((256, 256))
-    ])).to(Config.device)
+def forward(model: Model, image) -> tuple[str, float]:
+    image = get_image(
+        image, 
+        transform=transforms.Compose([
+            transforms.Grayscale(),
+            transforms.ToTensor(),
+            transforms.Resize((256, 256))
+        ])).to(Config.device)
 
+    model.eval()  # sets the model to evaluation mode
     out = model(image)
     prediction = label_from_num(out[0])
-    return prediction.name
+    return prediction.name, out[0]

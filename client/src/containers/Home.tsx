@@ -75,7 +75,7 @@ const Home = () => {
     setPredicition({
       prediction: result.data.prediction.class,
       certainty: result.data.prediction.certainty,
-      color: result.data.prediction.class == "Normal" ? "#3ab665" : "#b63a3a",
+      color: result.data.prediction.class.toLowerCase() === "normal" ? "#3ab665" : "#b63a3a",
     });
   };
 

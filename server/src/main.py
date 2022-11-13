@@ -23,11 +23,11 @@ def main(cfg: DictConfig):
     Config.setup(cfg, log)
     Config.log.info(f"Performing setup")
 
-    if Config.cfg.core.pretrained:
+    if Config.cfg.core.model:
         model = torch.load(os.path.join(
-            Config.cfg.files.models_dir, Config.cfg.core.pretrained))
+            Config.cfg.files.models_dir, Config.cfg.core.model))
         Config.set_current_model_name(
-            Config.cfg.core.pretrained.split("/")[-1])
+            Config.cfg.core.model.split("/")[-1])
     else:
         model = Model().to(Config.device)
     Config.log.info(

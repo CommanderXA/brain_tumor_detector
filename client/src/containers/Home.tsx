@@ -13,6 +13,7 @@ interface ImageFile {
 interface Prediction {
   prediction: string;
   certainty: number | null;
+  color: string;
 }
 
 const Home = () => {
@@ -23,6 +24,7 @@ const Home = () => {
   const [prediction, setPredicition] = useState<Prediction>({
     prediction: "Prediction".toUpperCase(),
     certainty: null,
+    color: "#000000",
   });
   const uploadImageRef = useRef<any>();
 
@@ -39,6 +41,7 @@ const Home = () => {
     });
   };
 
+  // sets image to the image box
   const handleChange = async (e: any) => {
     const [file] = e.target.files;
     if (file && file.type.substring(0, 5) === "image") {
@@ -49,18 +52,17 @@ const Home = () => {
     }
   };
 
+  // clears the image box
   const handleRemove = () => {
     setImageFile({ image: null, filename: null });
-    setPredicition({ prediction: "Prediction".toUpperCase(), certainty: null });
-    console.log(
-      prediction.prediction.toLowerCase() == "healthy"
-        ? "#3ab665"
-        : prediction.prediction.toLowerCase() == "tumor"
-        ? "#b63a3a"
-        : "#00000"
-    );
+    setPredicition({
+      prediction: "Prediction".toUpperCase(),
+      certainty: null,
+      color: "#000000",
+    });
   };
 
+  // sends the image to the server with NN and receives the result
   const getPrediction = async () => {
     const result = await axios.post(
       "http://127.0.0.1:8081/predict/image",
@@ -70,12 +72,14 @@ const Home = () => {
       }),
       { headers: { "Content-Type": "application/json" } }
     );
-
     setPredicition({
       prediction: result.data.prediction.class,
       certainty: result.data.prediction.certainty,
+      color: result.data.prediction.class == "Normal" ? "#3ab665" : "#b63a3a",
     });
   };
+
+  useEffect(() => {}, [prediction]);
 
   return (
     <div className={styles.center}>
@@ -87,18 +91,15 @@ const Home = () => {
               padding: 0,
               fontSize: 42,
               fontWeight: 800,
-              color:
-                prediction.prediction.toLowerCase() == "normal"
-                  ? "#3ab665"
-                  : prediction.prediction.toLowerCase() == "tumor"
-                  ? "#b63a3a"
-                  : "#00000",
+              color: prediction.color,
             }}
           >
             {prediction.prediction.toUpperCase()}
           </h1>
           <h1 style={{ margin: 0, padding: 0, fontSize: 42, fontWeight: 600 }}>
-            {prediction.certainty !== null ? Math.floor(prediction.certainty) + "%" : ""}
+            {prediction.certainty !== null
+              ? Math.floor(prediction.certainty) + "%"
+              : ""}
           </h1>
         </div>
         <ImageViewer image={imageFile.image} />

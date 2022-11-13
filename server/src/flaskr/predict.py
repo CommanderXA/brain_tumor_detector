@@ -23,7 +23,8 @@ def predict():
 
     certainty = certainty.item() * 100
 
-    print("Class: ", class_name, "\nAccuracy: ", certainty, "\nAccuracy: ", certainty)
+    if class_name == "Normal":
+        certainty = 100 - certainty
 
     return jsonify(
         {
